@@ -84,7 +84,9 @@ class N_Puzzle:
             for j in range(n):
                 if current[i][j] != 0:
                     num = current[i][j]
-                    ideal_i, ideal_j = (num - 1) // n, (num - 1) % n
+                    ideal_i, ideal_j = (num - 1) // n, (
+                        num - 1
+                    ) % n  # where shoueld it be
                     dist += abs(i - ideal_i) + abs(j - ideal_j)
         return dist
 
@@ -205,7 +207,9 @@ class N_Puzzle:
 # N_Puzzle.main()
 
 
-def random_solve(n, move_count=100):
+def random_solve(n):
+    move_count = 5 * n
+
     def print_matrix(matrix):
         for row in matrix:
             print(" ".join(str(num).ljust(2) for num in row))
