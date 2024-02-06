@@ -23,6 +23,7 @@ Option 3: N-Puzzle (for GWIDs ending with 1,2,4)
 - Note:
   A graphical user interface is not required for this implementation.
 """
+
 # shi qiu 20240128 6511 Ai class Lab 1
 import heapq
 import copy
@@ -38,7 +39,7 @@ class Node:
         self.h = h  # dist to ideal
         self.f = g + h  # Total cost
 
-    def __lt__(self, other):
+    def __lt__(self, other):  # <
         # priority queue f compare
         return self.f < other.f
 
@@ -58,6 +59,7 @@ class N_Puzzle:
         return complete_matrix
 
     # --------------------------- create correct matrix
+    """
     def manhattan_dist(current, ideal):
         dist = 0
         current_dict = {}
@@ -73,6 +75,26 @@ class N_Puzzle:
                     current_dict[key][1] - ideal_dict[key][1]
                 )
         return dist
+"""
+
+    def manhattan_dist(current):
+        n = len(current)
+        dist = 0
+        for i in range(n):
+            for j in range(n):
+                if current[i][j] != 0:
+                    num = current[i][j]
+                    ideal_i, ideal_j = (num - 1) // n, (num - 1) % n
+                    dist += abs(i - ideal_i) + abs(j - ideal_j)
+        return dist
+
+    def is_goal(current):
+        n = len(current)
+        for i in range(n):
+            for j in range(n):
+                if current[i][j] != 0 and current[i][j] != i * n + j + 1:
+                    return False
+        return True
 
     # --------------------------------- calculate distance between current and correct matrix
 
@@ -116,7 +138,7 @@ class N_Puzzle:
         start_node = Node(
             given_matrix,
             0,
-            N_Puzzle.manhattan_dist(given_matrix, ideal_positions),
+            N_Puzzle.manhattan_dist(given_matrix),
         )
         heapq.heappush(open_set, start_node)
 
@@ -124,10 +146,10 @@ class N_Puzzle:
 
         while open_set:
             current = heapq.heappop(open_set)
-            if current.h == 0:
+            if N_Puzzle.is_goal(current.matrix):
                 return current.g  # Return number of steps to solution
             node_count += 1
-            if node_count > 1000:  # about 10s
+            if node_count > 500:  # about 10s
                 return -2  # too big to search, posibily no solution
 
             closed_set.add(N_Puzzle.hashable(current.matrix))
@@ -137,7 +159,7 @@ class N_Puzzle:
                     continue
 
                 g = current.g + 1  # steps+1
-                h = N_Puzzle.manhattan_dist(next_matrix, ideal_positions)
+                h = N_Puzzle.manhattan_dist(next_matrix)
                 next_node = Node(next_matrix, g, h)
 
                 found = False
@@ -167,7 +189,7 @@ class N_Puzzle:
         # print(N_Puzzle.get_next(complete_matrix))
         # -------------------
 
-        print(N_Puzzle.manhattan_dist(matrix, complete_matrix))
+        print(N_Puzzle.manhattan_dist(matrix))
 
         puzzle_solver = N_Puzzle()
         start_time = time.time()
@@ -183,18 +205,35 @@ class N_Puzzle:
 # N_Puzzle.main()
 
 
-def random_solve(n):
-    def generate_matrix(n):
-        numbers = list(range(n * n))
-        random.shuffle(numbers)
-        return [numbers[i * n : (i + 1) * n] for i in range(n)]
-
+def random_solve(n, move_count=100):
     def print_matrix(matrix):
         for row in matrix:
             print(" ".join(str(num).ljust(2) for num in row))
 
-    random_matrix = generate_matrix(n)
-    print("Randomly Generated N-Puzzle:")
+    def generate_solvable_matrix(n, move_count):
+
+        matrix = [[(i * n + j + 1) % (n * n) for j in range(n)] for i in range(n)]
+        moves = [(-1, 0), (1, 0), (0, -1), (0, 1)]  # 4_way move
+        blank_pos = (n - 1, n - 1)  # last block 0
+
+        for _ in range(move_count):
+            while True:
+                move = random.choice(moves)
+                new_blank_pos = (blank_pos[0] + move[0], blank_pos[1] + move[1])
+                if 0 <= new_blank_pos[0] < n and 0 <= new_blank_pos[1] < n:
+                    (
+                        matrix[blank_pos[0]][blank_pos[1]],
+                        matrix[new_blank_pos[0]][new_blank_pos[1]],
+                    ) = (
+                        matrix[new_blank_pos[0]][new_blank_pos[1]],
+                        matrix[blank_pos[0]][blank_pos[1]],
+                    )
+                    blank_pos = new_blank_pos
+                    break
+        return matrix
+
+    random_matrix = generate_solvable_matrix(n, move_count)
+
     print_matrix(random_matrix)
 
     puzzle_solver = N_Puzzle()
@@ -203,12 +242,23 @@ def random_solve(n):
     end_time = time.time()
 
     print("\nTime Taken: {:.2f} seconds".format(end_time - start_time))
-    if steps == -2:
-        print("Search interrupted after 1000 nodes.")
-    elif steps == -1:
-        print("No solution found.")
-    else:
-        print("Minimum steps to solve the puzzle:", steps)
+
+    print("Minimum steps to solve the puzzle:", steps)
+    return steps
 
 
-random_solve(3)
+total, fail, avg_steps = 0, 0, 0
+
+for i in range(3, 10):
+    for _ in range(3):
+        total += 1
+        setps = random_solve(i)
+        if setps == -2:
+            fail += 1
+        else:
+            avg_steps += setps
+avg_steps = avg_steps / (total - fail) if (total - fail) > 0 else 0
+
+
+print(f"Fail rate: {fail / total}")
+print(f"Average steps: {avg_steps}")
