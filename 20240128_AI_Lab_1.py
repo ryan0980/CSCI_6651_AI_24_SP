@@ -91,11 +91,13 @@ class N_Puzzle:
         return dist
 
     def is_goal(current):
+        count = 1
         n = len(current)
         for i in range(n):
             for j in range(n):
-                if current[i][j] != 0 and current[i][j] != i * n + j + 1:
+                if current[i][j] != 0 and current[i][j] != count:
                     return False
+                count += 1
         return True
 
     # --------------------------------- calculate distance between current and correct matrix
@@ -151,7 +153,7 @@ class N_Puzzle:
             if N_Puzzle.is_goal(current.matrix):
                 return current.g  # Return number of steps to solution
             node_count += 1
-            if node_count > 500:  # about 10s
+            if node_count > 500:  # about 1s
                 return -2  # too big to search, posibily no solution
 
             closed_set.add(N_Puzzle.hashable(current.matrix))
@@ -245,7 +247,7 @@ def random_solve(n):
     steps = puzzle_solver.A_Star(random_matrix)
     end_time = time.time()
 
-    print("\nTime Taken: {:.2f} seconds".format(end_time - start_time))
+    print("\nTime Taken: ", end_time - start_time)
 
     print("Minimum steps to solve the puzzle:", steps)
     return steps
@@ -261,8 +263,8 @@ for i in range(3, 10):
             fail += 1
         else:
             avg_steps += setps
-avg_steps = avg_steps / (total - fail) if (total - fail) > 0 else 0
 
+avg_steps = avg_steps / (total - fail) if (total - fail) > 0 else 0
 
 print(f"Fail rate: {fail / total}")
 print(f"Average steps: {avg_steps}")
